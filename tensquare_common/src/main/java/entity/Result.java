@@ -41,7 +41,12 @@ public class Result<T> implements Serializable {
         this.code = code;
         this.message = message;
     }
-
+    public Result(boolean flag, Integer code,  Object data) {
+        super();
+        this.flag = flag;
+        this.code = code;
+        this.data = data;
+    }
 
     public boolean isFlag() {
         return flag;
