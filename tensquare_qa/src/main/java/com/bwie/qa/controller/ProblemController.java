@@ -120,6 +120,7 @@ public class ProblemController {
 	@GetMapping("/hotlist/{labelid}/{page}/{size}")
 	public Result hotlist(@PathVariable String labelid,@PathVariable Integer page,@PathVariable Integer size){
 		Page<Problem> pageList = problemService.hotlist(labelid,page,size);
+
 		return new Result(true,StatusCode.OK,"查询成功",new PageResult(pageList.getTotalElements(),pageList.getContent()));
 	}
 
