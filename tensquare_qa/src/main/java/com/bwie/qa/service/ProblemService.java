@@ -154,4 +154,46 @@ public class ProblemService {
 
 	}
 
+	/**
+	 * 最新问答列表
+	 * @param labelid
+	 * @param page
+	 * @param size
+	 * @return
+	 */
+	public Page<Problem> newlist(String labelid, Integer page, Integer size) {
+		//分页配置
+		PageRequest pageRequest = PageRequest.of(page - 1, size);
+		Page<Problem> newListByLabelId = problemDao.findNewListByLabelId(labelid, pageRequest);
+		return newListByLabelId;
+	}
+
+
+	/**
+	 * 热门问答列表
+	 * @param labelid
+	 * @param page
+	 * @param size
+	 * @return
+	 */
+	public Page<Problem> hotlist(String labelid, Integer page, Integer size) {
+		//分页配置
+		PageRequest pageRequest = PageRequest.of(page - 1, size);
+		Page<Problem> newListByLabelId = problemDao.findHotListByLabelId(labelid, pageRequest);
+		return newListByLabelId;
+	}
+
+	/**
+	 * 等待问答列表
+	 * @param labelid
+	 * @param page
+	 * @param size
+	 * @return
+	 */
+	public Page<Problem> waitlist(String labelid, Integer page, Integer size) {
+		//分页配置
+		PageRequest pageRequest = PageRequest.of(page - 1, size);
+		Page<Problem> newListByLabelId = problemDao.findWaitListByLabelId(labelid, pageRequest);
+		return newListByLabelId;
+	}
 }

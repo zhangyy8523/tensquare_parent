@@ -4,12 +4,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.bwie.qa.pojo.Problem;
 import com.bwie.qa.service.ProblemService;
@@ -104,5 +99,40 @@ public class ProblemController {
 		problemService.deleteById(id);
 		return new Result(true,StatusCode.OK,"删除成功");
 	}
-	
+
+	/***
+	 * 最新问答列表
+	 *
+	 */
+	@GetMapping("/newlist/{labelid}/{page}/{size}")
+	public Result newlist(@PathVariable String labelid,@PathVariable Integer page,@PathVariable Integer size){
+		Page<Problem> pageList = problemService.newlist(labelid,page,size);
+		return new Result(true,StatusCode.OK,"查询成功",new PageResult(pageList.getTotalElements(),pageList.getContent()));
+	}
+
+	/**
+	 * 热门问答列表
+	 * @param labelid
+	 * @param page
+	 * @param size
+	 * @return
+	 */
+	@GetMapping("/hotlist/{labelid}/{page}/{size}")
+	public Result hotlist(@PathVariable String labelid,@PathVariable Integer page,@PathVariable Integer size){
+		Page<Problem> pageList = problemService.hotlist(labelid,page,size);
+		return new Result(true,StatusCode.OK,"查询成功",new PageResult(pageList.getTotalElements(),pageList.getContent()));
+	}
+
+	/**
+	 * 等待问答列表
+	 * @param labelid
+	 * @param page
+	 * @param size
+	 * @return
+	 */
+	@GetMapping("/waitlist/{labelid}/{page}/{size}")
+	public Result waitlist(@PathVariable String labelid,@PathVariable Integer page,@PathVariable Integer size){
+		Page<Problem> pageList = problemService.waitlist(labelid,page,size);
+		return new Result(true,StatusCode.OK,"查询成功",new PageResult(pageList.getTotalElements(),pageList.getContent()));
+	}
 }
