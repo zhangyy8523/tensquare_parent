@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -39,13 +41,23 @@ public class ArticleService {
 	
 	@Autowired
 	private IdWorker idWorker;
+	@Autowired
+	RedisTemplate redisTemplate ;
 
 	/**
 	 * 查询全部列表
 	 * @return
 	 */
 	public List<Article> findAll() {
-		return articleDao.findAll();
+		List<Article> articleList = null;
+		//获取缓存中的数据，
+		 articleList = (List<Article>) redisTemplate.opsForValue().get("findSearchByArticle");
+		if(null==articleList){
+			List<Article> articleDaoAll = articleDao.findAll();
+		}
+
+
+		return articleList;
 	}
 
 	
@@ -62,15 +74,36 @@ public class ArticleService {
 		return articleDao.findAll(specification, pageRequest);
 	}
 
-	
+
+
 	/**
-	 * 条件查询
+	 * 条件查询 (真正的应该场景中，是不会对条件查询的方法做redis的缓存的，一般都是缓存的是单一的对象的数据)
 	 * @param whereMap
 	 * @return
 	 */
 	public List<Article> findSearch(Map whereMap) {
-		Specification<Article> specification = createSpecification(whereMap);
-		return articleDao.findAll(specification);
+		List<Article> articleList = null;
+		//添加查询，如果我们通过缓冲的话，是没法过滤数据  containsKey判断key 是否存在
+		if(!whereMap.containsKey("id")
+				||!whereMap.containsKey("columnid")||
+				!whereMap.containsKey("userid")||
+				!whereMap.containsKey("title")||
+				!whereMap.containsKey("content")||
+				!whereMap.containsKey("image")){
+			//如果这些参数都不存在，都没有值，则直接通过缓冲去获取数据
+			articleList = (List<Article>) redisTemplate.opsForValue().get("findSearchByArticle");
+			//articleList 取的数据为空值，则还是通过jpa去获取数据
+			if (null==articleList){
+				articleList = articleDao.findAll() ;
+			}
+		}else{
+			Specification<Article> specification = createSpecification(whereMap);
+			articleList = articleDao.findAll(specification) ;
+		}
+
+
+
+		return articleList;
 	}
 
 	/**
@@ -79,7 +112,21 @@ public class ArticleService {
 	 * @return
 	 */
 	public Article findById(String id) {
-		return articleDao.findById(id).get();
+		Article article = null;
+		//通过缓存key 查询当前的数据的缓存
+		System.out.println("======================我先获取缓存的数据==========================");
+		article = (Article) redisTemplate.opsForValue().get(id+"_Article");
+		//判断如果从缓存中的数据为空，则从数据库中获取，并且存入到redis中
+		if(null==article){
+			System.out.println("======================缓存数据是空的，我从数据库中获取了==========================");
+			article = articleDao.findById(id).get();
+			//存入到redis中
+			System.out.println("======================把从数据库中获取的数据，存到redis中==========================");
+//			redisTemplate.opsForValue().set(id+"_Article",article,1, TimeUnit.DAYS);
+			redisTemplate.opsForValue().set(id+"_Article",article,20, TimeUnit.SECONDS);
+		}
+
+		return article;
 	}
 
 	/**
@@ -96,6 +143,8 @@ public class ArticleService {
 	 * @param article
 	 */
 	public void update(Article article) {
+		//直接删除缓存中的数据， 让查询的时候，重新获取即可
+		redisTemplate.delete(article.getId()+"__Article");
 		articleDao.save(article);
 	}
 
@@ -104,6 +153,8 @@ public class ArticleService {
 	 * @param id
 	 */
 	public void deleteById(String id) {
+		//直接删除缓存中的数据， 让查询的时候，重新获取即可
+		redisTemplate.delete(id+"__Article");
 		articleDao.deleteById(id);
 	}
 
@@ -176,11 +227,22 @@ public class ArticleService {
 	}
 
 	/**
+	 * 审核
 	 * 在做增删改的时候，一定要事务的注解
 	 * @param articleId
 	 */
 	@Transactional
 	public void examine(String articleId) {
 		articleDao.examine(articleId);
+	}
+
+	/**
+	 * 点赞
+	 * 在做增删改的时候，一定要事务的注解
+	 * @param articleId
+	 */
+	@Transactional
+	public void updateThumbup(String articleId) {
+		articleDao.updateThumbup(articleId);
 	}
 }

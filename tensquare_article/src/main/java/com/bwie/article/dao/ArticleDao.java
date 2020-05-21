@@ -20,4 +20,14 @@ public interface ArticleDao extends JpaRepository<Article,String>,JpaSpecificati
     @Modifying
     @Query("update Article set state='1' where id=?1 ")
     public void examine(String id);
+
+
+    /**
+     * 文章点赞
+     *
+     */
+    @Modifying
+    @Query("update Article a set thumbup = thumbup+1 where id=:id ")
+    public int updateThumbup(String id);
+
 }
