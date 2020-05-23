@@ -11,6 +11,7 @@
         <module>tensquare_article</module>
         <module>tensquare_gathering</module>
         <module>tensquare_spitdb</module>
+        <module>tensquare_search</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
